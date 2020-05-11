@@ -1,6 +1,6 @@
 package cart
 
-import "github.com/hscells/rougebit/blip"
+import "github.com/hscells/blip16/blip"
 
 var TilePink = []uint8{
 	0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011, 0b00110011,
@@ -164,7 +164,7 @@ func PaddleCart() *blip.Memory {
 		0x00,
 		0x11, // INCA
 		0x22, // INCB
-		0x14, 0x73, 0x01, // LDf16A 0x7301
+		0x14, 0x73, 0x02, // LDf16A 0x7301
 		0x24, 0x73, 0x05, // LDf16B 0x7301
 		0x01, 0x74, 0x40, // JP16 0x7440
 	)

@@ -1,0 +1,95 @@
+$input 7401
+
+$paddlex 7301
+$paddley 7302
+
+$ballx 7305
+$bally 7306
+
+$paddles ff03
+$balls ff04
+
+$ballxdir ff05
+$ballydir ff06
+
+$regb ff07
+
+mov $balls 04
+mov $paddles 03
+
+:reset
+    mov $ballx 60
+    mov $bally 40
+    mov $paddlex 40
+    mov $paddley 70
+
+:main
+    lda $bally
+    jpgt 65 .ballinpaddleleft
+
+:handleinput
+    lda $input
+    jpeq 05 .paddleincx
+    jpeq 03 .paddledecx
+
+:movballx
+    lda $ballxdir
+    jpeq 00 .movballright
+    sub $ballx $balls $ballx
+    jp .resetballx
+
+:movballright
+    add $ballx $balls $ballx
+
+:resetballx
+    lda $ballx
+    jpgt 68 .resetballxleft
+    jplt 02 .resetballxright
+
+:movbally
+    lda $ballydir
+    jpeq 00 .movballdown
+    sub $bally $balls $bally
+    jp .resetbally
+
+:movballdown
+    add $bally $balls $bally
+
+:resetbally
+    lda $bally
+    jpgt 68 .resetballydown
+    jplt 02 .resetballyup
+    jp .main
+
+:paddleincx
+    add $paddlex $paddles $paddlex
+    jp .movballx
+
+:paddledecx
+    sub $paddlex $paddles $paddlex
+    jp .movballx
+
+:resetballxright
+    mov $ballxdir 00
+    jp .movbally
+
+:resetballxleft
+    mov $ballxdir 01
+    jp .movbally
+
+:resetballyup
+    mov $ballydir 00
+    jp .main
+
+:resetballydown
+    mov $ballydir 01
+    jp .main
+
+:ballinpaddleleft
+    sub $paddlex $ballx $regb
+    lda $regb
+    jplt 0f .resetballxleft
+    jpgt e9 .resetballxright
+    jp .reset
+
+nop

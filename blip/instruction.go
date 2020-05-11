@@ -3,9 +3,10 @@ package blip
 type Instruction func(cpu *CPU)
 
 var Instructions = map[uint8]Instruction{
-	0x00: NOP, 0x01: JP16, 0x02: JPEQXY16, 0x03: JPGTXY16, 0x04: JPLTXY16,
-	0x10: LDA8, 0x11: INCA, 0x12: DECA, 0x13: SUB8, 0x14: LDf16A,
-	0x20: LDB8, 0x21: INCB, 0x22: DECB, 0x23: SUBB, 0x24: LDf16B,
+	0x00: NOP, 0x01: JP16, 0x02: JPEQ, 0x03: JPLT, 0x04: JPGT,
+	0x10: MOV, 0x11: LDA, 0x12: INC, 0x13: DEC, 0x14: RDA,
+	0x20: ADD, 0x21: SUB, 0x22: MUL, 0x23: DIV,
+	0x30: AND, 0x31: OR, 0x32: XOR, 0x33: SLA, 0x34: SRA,
 }
 
 func NOP(cpu *CPU) {
@@ -14,86 +15,112 @@ func NOP(cpu *CPU) {
 
 func JP16(cpu *CPU) {
 	cpu.PC = cpu.Read16(cpu.PC + 1)
+	cpu.PC--
 	cycle(cpu, 16)
 }
 
-func JPEQXY16(cpu *CPU) {
-	if cpu.X == cpu.Y {
-		cpu.PC = cpu.Read16(cpu.PC + 1)
-	}
-	cycle(cpu, 16)
-}
-func JPGTXY16(cpu *CPU) {
-	if cpu.X > cpu.Y {
-		cpu.PC = cpu.Read16(cpu.PC + 1)
-	}
-	cycle(cpu, 16)
-}
-
-func JPLTXY16(cpu *CPU) {
-	if cpu.X < cpu.Y {
-		cpu.PC = cpu.Read16(cpu.PC + 1)
+func JPEQ(cpu *CPU) {
+	if cpu.A == cpu.Read8(cpu.PC+1) {
+		cpu.PC = cpu.Read16(cpu.PC + 2)
+		cpu.PC--
+	} else {
+		cpu.PC += 3
 	}
 	cycle(cpu, 16)
 }
 
-// --------- A Register ------------ \\
-
-func LDA8(cpu *CPU) {
-	cpu.A = cpu.Read8(cpu.PC + 1)
-	cpu.PC++
-	cycle(cpu, 8)
+func JPLT(cpu *CPU) {
+	if cpu.A < cpu.Read8(cpu.PC+1) {
+		cpu.PC = cpu.Read16(cpu.PC + 2)
+		cpu.PC--
+	} else {
+		cpu.PC += 3
+	}
+	cycle(cpu, 16)
 }
 
-func INCA(cpu *CPU) {
-	cpu.A++
+func JPGT(cpu *CPU) {
+	if cpu.A > cpu.Read8(cpu.PC+1) {
+		cpu.PC = cpu.Read16(cpu.PC + 2)
+		cpu.PC--
+	} else {
+		cpu.PC += 3
+	}
+	cycle(cpu, 16)
+}
+
+func MOV(cpu *CPU) {
+	cpu.Write8(cpu.Read16(cpu.PC+1), cpu.Read8(cpu.PC+3))
+	cpu.PC += 3
 	cycle(cpu, 4)
 }
 
-func DECA(cpu *CPU) {
-	cpu.A--
-	cycle(cpu, 4)
-}
-
-func SUB8(cpu *CPU) {
-	cpu.A -= cpu.Read8(cpu.PC + 1)
-	cpu.PC++
-	cycle(cpu, 4)
-}
-
-func LDf16A(cpu *CPU) {
+func INC(cpu *CPU) {
 	addr := cpu.Read16(cpu.PC + 1)
+	val := cpu.Read8(addr) + 1
+	cpu.Write8(addr, val)
 	cpu.PC += 2
-	cpu.Write8(addr, cpu.A)
-	cycle(cpu, 16)
-}
-
-// --------- B Register ------------ \\
-
-func LDB8(cpu *CPU) {
-	cpu.B = cpu.Read8(cpu.PC + 1)
-	cpu.PC++
-	cycle(cpu, 8)
-}
-
-func INCB(cpu *CPU) {
-	cpu.B++
 	cycle(cpu, 4)
 }
 
-func DECB(cpu *CPU) {
-	cpu.B--
-	cycle(cpu, 4)
-}
-
-func SUBB(cpu *CPU) {
-	cpu.B -= cpu.A
-	cycle(cpu, 4)
-}
-
-func LDf16B(cpu *CPU) {
+func DEC(cpu *CPU) {
 	addr := cpu.Read16(cpu.PC + 1)
+	val := cpu.Read8(addr) - 1
+	cpu.Write8(addr, val)
 	cpu.PC += 2
-	cpu.Write8(addr, cpu.B)
-	cycle(cpu, 16)
+	cycle(cpu, 4)
+}
+
+func LDA(cpu *CPU) {
+	cpu.A = cpu.Read8(cpu.Read16(cpu.PC + 1))
+	cpu.PC += 2
+	cycle(cpu, 4)
+}
+
+func RDA(cpu *CPU) {
+	cpu.Write8(cpu.Read16(cpu.PC+1), cpu.A)
+	cpu.PC += 2
+	cycle(cpu, 4)
+}
+
+func ADD(cpu *CPU) {
+	cpu.Write8(cpu.Read16(cpu.PC+5), cpu.Read8(cpu.Read16(cpu.PC+1))+cpu.Read8(cpu.Read16(cpu.PC+3)))
+	cpu.PC += 6
+	cycle(cpu, 12)
+}
+
+func SUB(cpu *CPU) {
+	cpu.Write8(cpu.Read16(cpu.PC+5), cpu.Read8(cpu.Read16(cpu.PC+1))-cpu.Read8(cpu.Read16(cpu.PC+3)))
+	cpu.PC += 6
+	cycle(cpu, 4)
+}
+
+func MUL(cpu *CPU) {
+	cpu.Write8(cpu.Read16(cpu.PC+3), cpu.Read8(cpu.PC+1)*cpu.Read8(cpu.PC+2))
+	cycle(cpu, 4)
+}
+
+func DIV(cpu *CPU) {
+	cpu.Write8(cpu.Read16(cpu.PC+3), cpu.Read8(cpu.PC+1)/cpu.Read8(cpu.PC+2))
+	cycle(cpu, 4)
+}
+
+func AND(cpu *CPU) {
+	cpu.Write8(cpu.Read16(cpu.PC+3), cpu.Read8(cpu.PC+1)&cpu.Read8(cpu.PC+2))
+}
+
+func OR(cpu *CPU) {
+	cpu.Write8(cpu.Read16(cpu.PC+3), cpu.Read8(cpu.PC+1)|cpu.Read8(cpu.PC+2))
+}
+
+func XOR(cpu *CPU) {
+	cpu.Write8(cpu.Read16(cpu.PC+3), cpu.Read8(cpu.PC+1)^cpu.Read8(cpu.PC+2))
+}
+
+func SLA(cpu *CPU) {
+	cpu.Write8(cpu.Read16(cpu.PC+3), cpu.Read8(cpu.PC+1)<<cpu.Read8(cpu.PC+2))
+}
+
+func SRA(cpu *CPU) {
+	cpu.Write8(cpu.Read16(cpu.PC+3), cpu.Read8(cpu.PC+1)>>cpu.Read8(cpu.PC+2))
 }

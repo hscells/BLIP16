@@ -1,0 +1,1 @@
+go run cmd/basm/basm.go < testdata/paddle.basm > testdata/paddle.o && go run cmd/b16c/b16c.go testdata/paddle.dat testdata/paddle.o > testdata/paddle.rom && go run cmd/blip16/main.go < testdata/paddle.rom

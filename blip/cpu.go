@@ -1,7 +1,6 @@
 package blip
 
 import (
-	"fmt"
 	"time"
 )
 
@@ -10,17 +9,16 @@ type Clock struct {
 }
 
 type Registers struct {
-	A, B, C uint8
-	X, Y, Z uint16
-	PC, SP  uint16
+	A      uint8
+	PC, SP uint16
 }
 
 type CPU struct {
 	Registers
 	*Memory
+	Cart *Memory
 	GPU
 	CPUClock Clock
-	GPUClock Clock
 }
 
 func NewCPU() *CPU {
@@ -39,11 +37,13 @@ func (c *CPU) Execute(i uint8) error {
 
 func (c *CPU) Run() {
 	c.PC = OffCD
-	for _, v := range c.Memory.Mem()[c.PC : c.PC+16] {
-		fmt.Printf("%04x\n", v)
-	}
 	for {
 		i := c.Memory.Mem()[c.PC]
+		if c.PC < OffCD {
+			for {
+				continue
+			}
+		}
 		err := c.Execute(i)
 		if err != nil {
 			panic(err)
@@ -54,7 +54,6 @@ func (c *CPU) Run() {
 		if err != nil {
 			panic(err)
 		}
-
 	}
 }
 

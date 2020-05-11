@@ -24,7 +24,7 @@ func (f FaifaceGPU) Init() {
 	cfg := pixelgl.WindowConfig{
 		Title:       "blip",
 		Bounds:      pixel.R(0, 0, float64(width), float64(height)),
-		VSync:       false,
+		VSync:       true,
 		Undecorated: false,
 	}
 	win, err := pixelgl.NewWindow(cfg)
@@ -57,6 +57,7 @@ func (f FaifaceGPU) Init() {
 				}
 			}
 		}
+
 		win.Update()
 
 		win.Clear(color.Black)
@@ -64,10 +65,32 @@ func (f FaifaceGPU) Init() {
 		canvas.SetPixels(buffer.Pix)
 		canvas.Draw(win, pixel.IM.Moved(c))
 
+		// -----------------------------------
+
+		f.Memory.WriteInput(0x00)
+		if win.Pressed(pixelgl.KeyZ) {
+			f.Memory.WriteInput(InputZ)
+		}
+		if win.Pressed(pixelgl.KeyX) {
+			f.Memory.WriteInput(InputX)
+		}
+		if win.Pressed(pixelgl.KeyLeft) {
+			f.Memory.WriteInput(InputLeft)
+		}
+		if win.Pressed(pixelgl.KeyDown) {
+			f.Memory.WriteInput(InputDown)
+		}
+		if win.Pressed(pixelgl.KeyRight) {
+			f.Memory.WriteInput(InputRight)
+		}
+		if win.Pressed(pixelgl.KeyUp) {
+			f.Memory.WriteInput(InputUp)
+		}
 	}
 }
 
 func (f FaifaceGPU) Render() error {
+	copy(f.VRAM(), make([]uint8, len(f.VRAM())))
 	f.drawing = true
 	for i := OffBR; i < OffSR; i += 3 {
 		m := uint16(i)
